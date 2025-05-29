@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import SortMenu from "../components/SortMenu";
 import SearchBar from "../components/SearchBar";
 import { Link } from "react-router-dom";
 import {
@@ -14,8 +15,8 @@ import {
 function HomePage() {
   const [countries, setCountries] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("name");
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
@@ -34,9 +35,22 @@ function HomePage() {
     country.name.common.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // ✅ Move sort logic after filteredCountries
+  const sortedCountries = [...filteredCountries].sort((a, b) => {
+    if (sortBy === "name") {
+      return a.name.common.localeCompare(b.name.common);
+    } else if (sortBy === "population") {
+      return (b.population || 0) - (a.population || 0);
+    } else if (sortBy === "area") {
+      return (b.area || 0) - (a.area || 0);
+    } else {
+      return 0;
+    }
+  });
+
   const indexOfLast = currentPage * itemsPerPage;
   const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentCountries = filteredCountries.slice(indexOfFirst, indexOfLast);
+  const currentCountries = sortedCountries.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.ceil(filteredCountries.length / itemsPerPage);
 
   const handlePageChange = (event, value) => {
@@ -45,7 +59,7 @@ function HomePage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, sortBy]);
 
   return (
     <Container>
@@ -54,6 +68,7 @@ function HomePage() {
       </Typography>
 
       <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      <SortMenu sortBy={sortBy} setSortBy={setSortBy} />
 
       <Grid container spacing={3}>
         {currentCountries.map((country) => (
@@ -72,11 +87,24 @@ function HomePage() {
                   },
                 }}
               >
-                <CardContent>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                <CardContent
+                  sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+                >
+                  <img
+                    src={country.flags.svg}
+                    alt={`Lipp: ${country.name.common}`}
+                    style={{
+                      width: "80px",
+                      height: "auto",
+                      marginBottom: "1rem",
+                      borderRadius: "6px",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                    }}
+                  />
+                  <Typography variant="h6" align="center" sx={{ fontWeight: 600 }}>
                     {country.name.common}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" align="center">
                     Pealinn: {country.capital ? country.capital[0] : "Puudub"}
                   </Typography>
                 </CardContent>
